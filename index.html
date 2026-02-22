@@ -199,20 +199,24 @@ button {
             }
         }
 
-        async function getText() {
-            const code = document.getElementById('roomCode').value;
-            if(!code) return alert("Enter a Key to fetch!");
+    async function getText() {
+    const code = document.getElementById('roomCode').value;
+    if(!code) return alert("Enter a Key!");
 
-            setStatus("Fetching...", "#8e44ad");
-            try {
-                const response = await fetch(`${API_URL}/get-text/${code}`);
-                const data = await response.json();
-                document.getElementById('box').value = data.content || "";
-                setStatus("Data received", "#27ae60");
-            } catch(e) {
-                setStatus("Fetch Failed", "#e74c3c");
-            }
-        }
+    setStatus("Fetching...", "#8e44ad");
+    try {
+        // Ensure this URL is EXACTLY your https render link
+        const response = await fetch(`${API_URL}/get-text/${code}`);
+        if (!response.ok) throw new Error('Server issues');
+        
+        const data = await response.json();
+        document.getElementById('box').value = data.content || "";
+        setStatus("Data received", "#27ae60");
+    } catch(e) {
+        console.log("Detailed Error:", e); // This will show the real error in the console
+        setStatus("Sync Error - Try again", "#e74c3c");
+    }
+}
 
         async function copyToLocal() {
             const text = document.getElementById('box').value;
@@ -222,4 +226,5 @@ button {
         }
     </script>
 </body>
+
 </html>
