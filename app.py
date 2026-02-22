@@ -4,7 +4,8 @@ from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app)
+# This line tells the backend to accept requests from ANYWHERE
+CORS(app, resources={r"/*": {"origins": "*"}}))
 
 # --- DATABASE SETUP ---
 def init_db():
@@ -50,4 +51,5 @@ def save_text():
     return jsonify({"status": "success"})
 
 if __name__ == '__main__':
+
     app.run(debug=True, host='0.0.0.0', port=5000)
