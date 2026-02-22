@@ -1,17 +1,16 @@
 import sqlite3
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
 import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-# This line tells the backend to accept requests from ANYWHERE
-CORS(app, resources={r"/*": {"origins": "*"}}))
+# This line is CRITICAL for the website to talk to the backend
+CORS(app)
 
-# --- DATABASE SETUP ---
 def init_db():
+    # This creates the database file in the cloud environment
     conn = sqlite3.connect('clipboard.db')
     cursor = conn.cursor()
-    # We use 'room' as the unique key to find your specific text
     cursor.execute('CREATE TABLE IF NOT EXISTS clipboard (room TEXT PRIMARY KEY, content TEXT)')
     conn.commit()
     conn.close()
@@ -19,8 +18,8 @@ def init_db():
 init_db()
 
 @app.route('/')
-def index():
-    return send_from_directory(os.getcwd(), 'index.html')
+def home():
+    return "Backend is Live!"
 
 @app.route('/get-text/<room>', methods=['GET'])
 def get_text(room):
@@ -29,27 +28,24 @@ def get_text(room):
     cursor.execute('SELECT content FROM clipboard WHERE room = ?', (room,))
     row = cursor.fetchone()
     conn.close()
-    if row:
-        return jsonify({"content": row[0]})
-    return jsonify({"content": "", "error": "Room not found"}), 404
+    return jsonify({"content": row[0] if row else ""})
 
 @app.route('/save-text', methods=['POST'])
 def save_text():
     data = request.json
     room = data.get('room')
     content = data.get('content')
-    
     if not room:
-        return jsonify({"error": "No room code provided"}), 400
-
+        return jsonify({"error": "No room code"}), 400
+        
     conn = sqlite3.connect('clipboard.db')
     cursor = conn.cursor()
-    # This replaces the old text if the room code already exists
     cursor.execute('INSERT OR REPLACE INTO clipboard (room, content) VALUES (?, ?)', (room, content))
     conn.commit()
     conn.close()
     return jsonify({"status": "success"})
 
 if __name__ == '__main__':
-
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Use the port Render expects
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
